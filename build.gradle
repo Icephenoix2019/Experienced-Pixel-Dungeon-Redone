@@ -1,12 +1,12 @@
 buildscript {
     repositories {
         google()
-        jcenter()
+        mavenCentral()
     }
     dependencies {
         //FIXME the version of R8 coming with gradle plugin 4.0.0 causes serious problems
         //noinspection GradleDependency
-        classpath 'com.android.tools.build:gradle:3.6.3'
+        classpath 'com.android.tools.build:gradle:3.6.4'
     }
 }
 
@@ -16,22 +16,22 @@ allprojects {
         appName = 'Experienced Pixel Dungeon'
         appPackageName = 'com.trashboxbobylev.experiencedpixeldungeon.redone'
 
-        appVersionCode = 439
-        appVersionName = 'ExpPD-2.9.2'
+        appVersionCode = 453
+        appVersionName = 'ExpPD-2.10.2'
 
         appJavaCompatibility = JavaVersion.VERSION_1_8
 
-        appAndroidCompileSDK = 29
-        appAndroidMinSDK = 9
-        appAndroidTargetSDK = 29
+        appAndroidCompileSDK = 30
+        appAndroidMinSDK = 14
+        appAndroidTargetSDK = 30
 
-        gdxVersion = '1.9.10'
+        gdxVersion = '1.10.0'
     }
     version = appVersionName
 
     repositories {
         google()
-        jcenter()
+        mavenCentral()
     }
 
 }

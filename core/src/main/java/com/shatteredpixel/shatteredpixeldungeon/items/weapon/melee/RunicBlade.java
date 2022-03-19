@@ -112,10 +112,10 @@ public class RunicBlade extends MeleeWeapon {
 
     @Override
     public int max(int lvl) {
-        int i = 4 * (tier) +                    //16 base, down from 25
-                Math.round(lvl * (tier)); //+6 per level, up from +5
-        if (!charged) i = 5 * (tier) +
-                Math.round(lvl * (tier + 1));
+        int i = 5 * (tier) +                    //20 base, down from 30
+                Math.round(lvl * (tier+1)); //+5 per level, up from +6
+        if (!charged) i = 6 * (tier) +
+                Math.round(lvl * (tier + 2));
         return i;
     }
 
@@ -206,7 +206,7 @@ public class RunicBlade extends MeleeWeapon {
                                                     if (Char.hit(curUser, enemy, true)) {
                                                         int dmg = curBlade.damageRoll(curUser);
                                                         enemy.damage(dmg, curBlade);
-                                                        if (curUser.subClass == HeroSubClass.GLADIATOR) Buff.affect( curUser, Combo.class ).hit( enemy );
+                                                        if (curUser.isSubclass(HeroSubClass.GLADIATOR)) Buff.affect( curUser, Combo.class ).hit( enemy );
                                                         curBlade.proc(curUser, enemy, dmg);
                                                         Sample.INSTANCE.play(Assets.Sounds.HIT_MAGIC);
                                                     } else {

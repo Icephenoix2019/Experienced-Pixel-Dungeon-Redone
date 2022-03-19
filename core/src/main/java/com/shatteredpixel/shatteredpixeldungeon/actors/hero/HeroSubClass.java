@@ -41,7 +41,9 @@ public enum HeroSubClass {
 	FREERUNNER( "freerunner" ),
 	
 	SNIPER( "sniper" ),
-	WARDEN( "warden" );
+	WARDEN( "warden" ),
+
+	KING("kingy");
 	
 	private String title;
 	
@@ -67,5 +69,4 @@ public enum HeroSubClass {
 		String value = bundle.getString( SUBCLASS );
 		return valueOf( value );
 	}
-	
 }

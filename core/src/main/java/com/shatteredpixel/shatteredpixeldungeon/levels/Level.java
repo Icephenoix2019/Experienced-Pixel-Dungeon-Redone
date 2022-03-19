@@ -47,7 +47,6 @@ import com.shatteredpixel.shatteredpixeldungeon.effects.particles.WindParticle;
 import com.shatteredpixel.shatteredpixeldungeon.items.*;
 import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.TalismanOfForesight;
 import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.TimekeepersHourglass;
-import com.shatteredpixel.shatteredpixeldungeon.items.food.SmallRation;
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.PotionOfStrength;
 import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfUpgrade;
 import com.shatteredpixel.shatteredpixeldungeon.items.stones.StoneOfEnchantment;
@@ -83,7 +82,10 @@ public abstract class Level implements Bundlable {
 		CHASM,
 		WATER,
 		GRASS,
-		DARK
+		DARK,
+		LARGE,
+		TRAPS,
+		SECRETS
 	}
 
 	protected int width;
@@ -161,11 +163,7 @@ public abstract class Level implements Bundlable {
 		
 		if (!(Dungeon.bossLevel())) {
 
-			if (Dungeon.isChallenged(Challenges.NO_FOOD)){
-				addItemToSpawn( new SmallRation() );
-			} else {
-				addItemToSpawn(Generator.random(Generator.Category.FOOD));
-			}
+			addItemToSpawn(Generator.random(Generator.Category.FOOD));
 
 			if (Dungeon.isChallenged(Challenges.DARKNESS)){
 				addItemToSpawn( new Torch() );
@@ -195,23 +193,33 @@ public abstract class Level implements Bundlable {
 			}
 			
 			if (Dungeon.depth > 1) {
-				switch (Random.Int( 10 )) {
-				case 0:
-					if (!Dungeon.bossLevel( Dungeon.depth + 1 )) {
+				//50% chance of getting a level feeling
+				//~7.15% chance for each feeling
+				switch (Random.Int( 14 )) {
+					case 0:
 						feeling = Feeling.CHASM;
-					}
-					break;
-				case 1:
-					feeling = Feeling.WATER;
-					break;
-				case 2:
-					feeling = Feeling.GRASS;
-					break;
-				case 3:
-					feeling = Feeling.DARK;
-					addItemToSpawn(new Torch());
-					viewDistance = Math.round(viewDistance/2f);
-					break;
+						break;
+					case 1:
+						feeling = Feeling.WATER;
+						break;
+					case 2:
+						feeling = Feeling.GRASS;
+						break;
+					case 3:
+						feeling = Feeling.DARK;
+						addItemToSpawn(new Torch());
+						viewDistance = Math.round(viewDistance/2f);
+						break;
+					case 4:
+						feeling = Feeling.LARGE;
+						addItemToSpawn(Generator.random(Generator.Category.FOOD));
+						break;
+					case 5:
+						feeling = Feeling.TRAPS;
+						break;
+					case 6:
+						feeling = Feeling.SECRETS;
+						break;
 				}
 			}
 		}
@@ -360,7 +368,7 @@ public abstract class Level implements Bundlable {
 				if (mob != null) mobsToSpawn.add(mob);
 			}
 		}
-		
+
 		buildFlagMaps();
 		cleanWalls();
 
@@ -427,7 +435,7 @@ public abstract class Level implements Bundlable {
 		if (mobsToSpawn == null || mobsToSpawn.isEmpty()) {
 			mobsToSpawn = Bestiary.getMobRotation(Dungeon.depth);
 		}
-		
+
 		return Reflection.newInstance(mobsToSpawn.remove(0));
 	}
 
@@ -478,7 +486,7 @@ public abstract class Level implements Bundlable {
 		}
 		return null;
 	}
-	
+
 	public Actor respawner() {
 		return new Actor() {
 
@@ -495,7 +503,7 @@ public abstract class Level implements Bundlable {
 						count += mob.spawningWeight();
 					}
 				}
-				
+
 				if (count < nMobs()) {
 
 					Mob mob = createMob();
@@ -513,14 +521,15 @@ public abstract class Level implements Bundlable {
 			}
 		};
 	}
-	
+
 	public float respawnTime(){
+		float respawn_timer = Math.max(1f, Dungeon.respawn_timer);
 		if (Statistics.amuletObtained){
-			return Dungeon.respawn_timer/2f;
+			return respawn_timer /2f;
 		} else if (Dungeon.level.feeling == Feeling.DARK){
-			return 2*Dungeon.respawn_timer/3f;
+			return 2* respawn_timer /3f;
 		} else {
-			return Dungeon.respawn_timer;
+			return respawn_timer;
 		}
 	}
 	
@@ -597,6 +606,7 @@ public abstract class Level implements Bundlable {
 		if (w != null && w.volume > 0){
 			for (int i=0; i < length(); i++) {
 				solid[i] = solid[i] || w.cur[i] > 0;
+				flamable[i] = flamable[i] || w.cur[i] > 0;
 			}
 		}
 		
@@ -635,7 +645,16 @@ public abstract class Level implements Bundlable {
 	}
 
 	public void destroy( int pos ) {
-		set( pos, Terrain.EMBERS );
+		//if raw tile type is flammable or empty
+		int terr = map[pos];
+		if (terr == Terrain.EMPTY || terr == Terrain.EMPTY_DECO
+				|| (Terrain.flags[map[pos]] & Terrain.FLAMABLE) != 0) {
+			set(pos, Terrain.EMBERS);
+		}
+		Blob web = blobs.get(Web.class);
+		if (web != null){
+			web.clear(pos);
+		}
 	}
 
 	public void cleanWalls() {
@@ -979,7 +998,7 @@ public abstract class Level implements Bundlable {
 		if (sighted) {
 			boolean[] blocking;
 			
-			if ((c instanceof Hero && ((Hero) c).subClass == HeroSubClass.WARDEN)
+			if ((c instanceof Hero && ((Hero) c).isSubclass(HeroSubClass.WARDEN))
 				|| c instanceof YogFist.SoiledFist) {
 				blocking = Dungeon.level.losBlocking.clone();
 				for (int i = 0; i < blocking.length; i++){
@@ -992,7 +1011,7 @@ public abstract class Level implements Bundlable {
 			}
 			
 			int viewDist = c.viewDistance;
-			if (c instanceof Hero && ((Hero) c).subClass == HeroSubClass.SNIPER) viewDist *= 1.5f;
+			if (c instanceof Hero && ((Hero) c).isSubclass(HeroSubClass.SNIPER)) viewDist *= 1.5f;
 			
 			ShadowCaster.castShadow( cx, cy, fieldOfView, blocking, viewDist );
 		} else {
@@ -1008,7 +1027,7 @@ public abstract class Level implements Bundlable {
 			if (c.buff(MagicalSight.class) != null){
 				sense = 8;
 			}
-			if (((Hero)c).subClass == HeroSubClass.SNIPER){
+			if (((Hero)c).isSubclass(HeroSubClass.SNIPER)){
 				sense *= 1.5f;
 			}
 		}
@@ -1049,7 +1068,7 @@ public abstract class Level implements Bundlable {
 					}
 
 				}
-			} else if (((Hero)c).heroClass == HeroClass.HUNTRESS) {
+			} else if (((Hero)c).isClass(HeroClass.HUNTRESS)) {
 				for (Mob mob : mobs) {
 					int p = mob.pos;
 					if (distance( c.pos, p) == 2) {
@@ -1059,7 +1078,7 @@ public abstract class Level implements Bundlable {
 						}
 					}
 				}
-			} else if (((Hero)c).subClass == HeroSubClass.ASSASSIN) {
+			} else if (((Hero)c).isSubclass(HeroSubClass.ASSASSIN)) {
                 for (Mob mob : mobs) {
                     int p = mob.pos;
                     if (mob instanceof Bbat || (mob.buff(Marked.class) != null)) {

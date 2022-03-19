@@ -31,7 +31,6 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Awareness;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Light;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.MindVision;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
-import com.shatteredpixel.shatteredpixeldungeon.actors.hero.HeroClass;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.*;
 import com.shatteredpixel.shatteredpixeldungeon.items.Ankh;
@@ -65,6 +64,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+
+import static com.shatteredpixel.shatteredpixeldungeon.actors.hero.HeroClass.ROGUE;
 
 public class Dungeon {
 
@@ -154,7 +155,7 @@ public class Dungeon {
 	public static int depth;
 	public static int gold;
 	public static int cycle;
-	public static int respawn_timer;
+	public static float respawn_timer;
 	public static int additionalMobs;
 	public static float fireDamage;
 	public static int luck;
@@ -420,7 +421,7 @@ public class Dungeon {
 
 		hero.pos = pos;
 
-		if (!LimitedDrops.BBAT.dropped() && hero.heroClass == HeroClass.ROGUE){
+		if (!LimitedDrops.BBAT.dropped() && hero.isClass(ROGUE)){
 		    LimitedDrops.BBAT.drop();
             ArrayList<Integer> respawnPoints = new ArrayList<>();
 
@@ -742,7 +743,7 @@ public class Dungeon {
 		gold = bundle.getInt( GOLD );
 		depth = bundle.getInt( DEPTH );
 		cycle = bundle.getInt( CYCLE);
-		respawn_timer = bundle.getInt(RESPAWN_TIMER);
+		respawn_timer = bundle.getFloat(RESPAWN_TIMER);
 		additionalMobs = bundle.getInt(ADDMOBS);
 		fireDamage = bundle.getFloat(FIREDANAGE);
 		luck = bundle.getInt(LUCK);

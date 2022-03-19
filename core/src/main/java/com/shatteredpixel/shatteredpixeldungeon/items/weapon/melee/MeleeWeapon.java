@@ -32,17 +32,13 @@ import com.shatteredpixel.shatteredpixeldungeon.items.weapon.Weapon;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.Kunai;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.watabou.utils.Bundle;
-import com.watabou.utils.Random;
 
 public class MeleeWeapon extends Weapon {
-	
-	public int tier;
-	public int internalTier;
 
 	@Override
 	public int min(int lvl) {
-		return  tier +  //base
-				lvl;    //level scaling
+		return  tier*2 +  //base
+				lvl*2;    //level scaling
 	}
 
 	@Override
@@ -133,9 +129,13 @@ public class MeleeWeapon extends Weapon {
 
     @Override
     public Item random() {
-        tier += Dungeon.cycle * 5;
+        setCorrectTier();
         return super.random();
     }
+
+    public void setCorrectTier() {
+		tier += Dungeon.cycle * 5;
+	}
 
     @Override
 	public int price() {

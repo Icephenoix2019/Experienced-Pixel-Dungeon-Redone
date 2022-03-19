@@ -148,13 +148,15 @@ public class ScrollOfTransmutation extends InventoryScroll {
 		Weapon n;
 		Generator.Category c;
 		if (w instanceof MeleeWeapon) {
-			c = Generator.wepTiers[((MeleeWeapon) w).internalTier];
+			c = Generator.wepTiers[w.internalTier-1];
 		} else {
-			c = Generator.misTiers[((MissileWeapon) w).internalTier];
+			c = Generator.misTiers[w.internalTier-1];
 		}
 		
 		do {
-			n = (Weapon) Reflection.newInstance(c.classes[Dungeon.chances(c.probs)]);
+			n = (Weapon) Reflection.newInstance(c.classes[Random.chances(c.probs)]);
+			if (w.tier > 5)
+				n.tier += Dungeon.cycle * 5;
 		} while (Challenges.isItemBlocked(n) || n.getClass() == w.getClass());
 		
 		int level = w.level();

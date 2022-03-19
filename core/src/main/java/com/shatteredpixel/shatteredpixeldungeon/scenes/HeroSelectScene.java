@@ -26,6 +26,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.hero.HeroClass;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.HeroSubClass;
 import com.shatteredpixel.shatteredpixeldungeon.journal.Journal;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
+import com.shatteredpixel.shatteredpixeldungeon.sprites.HeroSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 import com.shatteredpixel.shatteredpixeldungeon.ui.*;
@@ -269,7 +270,7 @@ public class HeroSelectScene extends PixelScene {
 
 			this.cl = cl;
 
-			icon(new Image(cl.spritesheet(), 0, 90, 12, 15));
+			icon(HeroSprite.avatar(cl,6));
 
 		}
 
@@ -340,6 +341,13 @@ public class HeroSelectScene extends PixelScene {
 							new ItemSprite(ItemSpriteSheet.SPIRIT_BOW, null),
 							new ItemSprite(ItemSpriteSheet.GLOVES, null),
 							new Image(Assets.Environment.TILES_SEWERS, 112, 96, 16, 16 )
+					};
+					break;
+				case RAT_KING:
+					tabIcons = new Image[]{
+							new ItemSprite(ItemSpriteSheet.CHEESE, null),
+							new ItemSprite(ItemSpriteSheet.KING_BLADE, null),
+							Icons.get(Icons.DEPTH)
 					};
 					break;
 			}

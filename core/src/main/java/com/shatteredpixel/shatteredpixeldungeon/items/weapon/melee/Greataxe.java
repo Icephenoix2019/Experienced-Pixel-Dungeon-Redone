@@ -46,8 +46,8 @@ public class Greataxe extends MeleeWeapon {
 
 	@Override
 	public int max(int lvl) {
-		return  5*(tier+4) +    //45 base, up from 30
-				lvl*(tier+1);   //scaling unchanged
+		return  7*(tier+4) +    //63 base, up from 36
+				lvl*(tier+2);   //+7
 	}
 
 	@Override
@@ -74,9 +74,9 @@ public class Greataxe extends MeleeWeapon {
                 Dungeon.hero.belongings.weapon = equipped;
                 enemyCount++;
 
-                CellEmitter.get(cell + i).burst(Speck.factory(Speck.SCREAM), 4);
+                CellEmitter.get(cell + i).burst(Speck.factory(Speck.SCREAM), 2);
             }
         }
-        Dungeon.hero.spendAndNext( speedFactor(Dungeon.hero) + speedFactor(Dungeon.hero)*enemyCount*0.8f );
+        Dungeon.hero.spendAndNext( speedFactor(Dungeon.hero) );
     }
 }

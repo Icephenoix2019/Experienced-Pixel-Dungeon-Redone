@@ -53,7 +53,6 @@ import com.shatteredpixel.shatteredpixeldungeon.items.rings.*;
 import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.Scroll;
 import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfMagicMapping;
 import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfUpgrade;
-import com.shatteredpixel.shatteredpixeldungeon.items.wands.WandOfDisintegration;
 import com.shatteredpixel.shatteredpixeldungeon.items.wands.WandOfLivingEarth;
 import com.shatteredpixel.shatteredpixeldungeon.items.wands.WandOfWarding;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.SpiritBow;
@@ -62,7 +61,6 @@ import com.shatteredpixel.shatteredpixeldungeon.items.weapon.enchantments.Blocki
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.CreativeGloves;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.Dirk;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.Flail;
-import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.Mace;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.MissileWeapon;
 import com.shatteredpixel.shatteredpixeldungeon.journal.Notes;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
@@ -109,7 +107,20 @@ public class Hero extends Char {
 	private static final float HUNGER_FOR_SEARCH	= 6f;
 	
 	public HeroClass heroClass = HeroClass.ROGUE;
+
+	public boolean isClass(HeroClass clazz){
+		if (heroClass == HeroClass.RAT_KING) return true;
+		return clazz == this.heroClass;
+	}
+
 	public HeroSubClass subClass = HeroSubClass.NONE;
+
+	public boolean isSubclass(HeroSubClass subClass) {
+		if (this.subClass == HeroSubClass.KING) return true;
+		return subClass == this.subClass;
+	}
+
+	public ArrayList<Perks.Perk> perks = new ArrayList<>();
 	
 	private int attackSkill = 10;
 	private int defenseSkill = 5;
@@ -192,6 +203,7 @@ public class Hero extends Char {
     private static final String TOTAL_EXPERIENCE	= "totalExp";
 	private static final String HTBOOST     = "htboost";
 	private static final String GRINDING = "grinding";
+	private static final String PERKS = "perks";
 	
 	@Override
 	public void storeInBundle( Bundle bundle ) {
@@ -200,6 +212,7 @@ public class Hero extends Char {
 		
 		heroClass.storeInBundle( bundle );
 		subClass.storeInBundle( bundle );
+		Perks.storeInBundle(bundle, perks);
 		
 		bundle.put( ATTACK, attackSkill );
 		bundle.put( DEFENSE, defenseSkill );
@@ -223,6 +236,7 @@ public class Hero extends Char {
 		
 		heroClass = HeroClass.restoreInBundle( bundle );
 		subClass = HeroSubClass.restoreInBundle( bundle );
+		Perks.restoreFromBundle(bundle, perks);
 		
 		attackSkill = bundle.getInt( ATTACK );
 		defenseSkill = bundle.getInt( DEFENSE );
@@ -302,7 +316,7 @@ public class Hero extends Char {
 		Invisibility.dispel();
 		belongings.weapon = equipped;
 		
-		if (subClass == HeroSubClass.GLADIATOR){
+		if (isSubclass(HeroSubClass.GLADIATOR)){
 			if (hit) {
 				Buff.affect( this, Combo.class ).hit( enemy );
 			} else {
@@ -350,6 +364,10 @@ public class Hero extends Char {
 		if (belongings.armor != null) {
 			evasion = belongings.armor.evasionFactor(this, evasion);
 		}
+		if (perks.contains(Perks.Perk.PROTEIN_INFUSION)){
+			int hunger = buff(Hunger.class).hunger();
+			evasion *= 1f + 0.5f*((Hunger.STARVING - hunger)/Hunger.STARVING);
+		}
 
 		return Math.round(evasion);
 	}
@@ -377,6 +395,9 @@ public class Hero extends Char {
 		
 		Blocking.BlockBuff block = buff(Blocking.BlockBuff.class);
 		if (block != null)              dr += block.blockingRoll();
+		if (buff(HoldFast.class) != null){
+			dr += Random.NormalIntRange(HoldFast.minArmor(), HoldFast.armor());
+		}
 		
 		return dr;
 	}
@@ -415,6 +436,10 @@ public class Hero extends Char {
 		if (momentum != null){
 			((HeroSprite)sprite).sprint( 1f + 0.05f*momentum.stacks());
 			speed *= momentum.speedMultiplier();
+		}
+		if (perks.contains(Perks.Perk.PROTEIN_INFUSION)){
+			int hunger = buff(Hunger.class).hunger();
+			speed *= 1f + 1f*((Hunger.STARVING - hunger)/Hunger.STARVING);
 		}
 		
 		return speed;
@@ -511,6 +536,14 @@ public class Hero extends Char {
 			spendAndNext( TICK );
 			return false;
 		}
+		if (!(curAction instanceof HeroAction.Move))
+			if (buff(Perks.DirectiveMovingTracker.class) != null) {
+				if (buff(Perks.DirectiveMovingTracker.class).count() > -1) {
+					Buff.detach(this, Perks.DirectiveMovingTracker.class);
+				} else {
+					buff(Perks.DirectiveMovingTracker.class).countUp(1);
+				}
+			}
 		
 		boolean actResult;
 		if (curAction == null) {
@@ -565,7 +598,7 @@ public class Hero extends Char {
 			}
 		}
 		
-		if( subClass == HeroSubClass.WARDEN && Dungeon.level.map[pos] == Terrain.FURROWED_GRASS){
+		if( isSubclass(HeroSubClass.WARDEN) && Dungeon.level.map[pos] == Terrain.FURROWED_GRASS){
 			Buff.affect(this, Barkskin.class).set( lvl + 5, 1 );
 		}
 		
@@ -967,6 +1000,9 @@ public class Hero extends Char {
 	public void rest( boolean fullRest ) {
 		spendAndNext( TIME_TO_REST );
 		if (!fullRest) {
+			if (perks.contains(Perks.Perk.HOLD_FAST)){
+				Buff.affect(this, HoldFast.class);
+			}
 			sprite.showStatus( CharSprite.DEFAULT, Messages.get(this, "wait") );
 		}
 		resting = fullRest;
@@ -979,16 +1015,17 @@ public class Hero extends Char {
 		KindOfWeapon wep = belongings.weapon;
 
 		if (wep != null) damage = wep.proc( this, enemy, damage );
-		
-		switch (subClass) {
-		case SNIPER:
+
+		damage = Perks.onAttackProc( this, enemy, damage );
+
+		if (isSubclass(HeroSubClass.SNIPER)) {
 			if (wep instanceof MissileWeapon && !(wep instanceof SpiritBow.SpiritArrow)) {
 				Actor.add(new Actor() {
-					
+
 					{
 						actPriority = VFX_PRIO;
 					}
-					
+
 					@Override
 					protected boolean act() {
 						if (enemy.isAlive()) {
@@ -999,8 +1036,6 @@ public class Hero extends Char {
 					}
 				});
 			}
-			break;
-		default:
 		}
 		
 		return damage;
@@ -1009,7 +1044,7 @@ public class Hero extends Char {
 	@Override
 	public int defenseProc( Char enemy, int damage ) {
 		
-		if (damage > 0 && subClass == HeroSubClass.BERSERKER){
+		if (damage > 0 && isSubclass(HeroSubClass.BERSERKER)){
 			Berserk berserk = Buff.affect(this, Berserk.class);
 			berserk.damage(damage);
 		}
@@ -1224,16 +1259,24 @@ public class Hero extends Char {
 		if (step != -1) {
 			
 			float speed = speed();
-			
+
 			sprite.move(pos, step);
 			move(step);
-
-			spend( 1 / speed );
+			if (buff(Perks.DirectiveMovingTracker.class) != null){
+				Perks.DirectiveMovingTracker b = buff(Perks.DirectiveMovingTracker.class);
+				b.countUp(1);
+				if (b.count() >= 3){
+					b.detach();
+				}
+			}
+			else {
+				spend(1 / speed);
+			}
 			justMoved = true;
 			
 			search(false);
 			
-			if (subClass == HeroSubClass.FREERUNNER){
+			if (isSubclass(HeroSubClass.FREERUNNER)){
 				Buff.affect(this, Momentum.class).gainStack();
 			}
 
@@ -1359,10 +1402,11 @@ public class Hero extends Char {
                     Dungeon.level.drop(sou, pos);
                 } else if (!souAnnounced){
                     GLog.p( Messages.get(this, "you_now_have", sou.name()) );
+					new Flare(6, 28).color(0x38FF48, true).show(sprite, 3.67f);
                     souAnnounced = true;
                 }
             }
-            new Flare(6, 28).color(0x38FF48, true).show(sprite, 3.67f);
+
         }
 		
 		boolean levelUp = false;
@@ -1379,6 +1423,7 @@ public class Hero extends Char {
             Bbat.updateHP();
             attackSkill++;
             defenseSkill++;
+            Perks.earnPerk(this);
 
         }
 		
@@ -1402,6 +1447,8 @@ public class Hero extends Char {
 	}
 	
 	public static int maxExp( int lvl ){
+		HeroClass heroClass = Dungeon.hero == null ? GamesInProgress.selectedClass: Dungeon.hero.heroClass;
+		if (heroClass == HeroClass.RAT_KING) return 3 + lvl*4;
 		return 5 + lvl * 5;
 	}
 	
@@ -1621,7 +1668,7 @@ public class Hero extends Char {
 		
 		boolean hit = attack( enemy );
 
-		if (subClass == HeroSubClass.GLADIATOR){
+		if (isSubclass(HeroSubClass.GLADIATOR)){
 			if (hit) {
 				Buff.affect( this, Combo.class ).hit( enemy );
 			} else {
@@ -1717,7 +1764,7 @@ public class Hero extends Char {
 		
 		boolean smthFound = false;
 
-		int distance = heroClass == HeroClass.ROGUE ? 2 : 1;
+		int distance = isClass(HeroClass.ROGUE) ? 2 : 1;
 		
 		boolean foresight = buff(Foresight.class) != null;
 		

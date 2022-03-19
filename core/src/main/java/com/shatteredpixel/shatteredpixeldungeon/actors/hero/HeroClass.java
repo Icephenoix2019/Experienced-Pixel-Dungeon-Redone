@@ -31,29 +31,24 @@ import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.items.BrokenSeal;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.items.PsycheChest;
-import com.shatteredpixel.shatteredpixeldungeon.items.TicketToArena;
 import com.shatteredpixel.shatteredpixeldungeon.items.armor.ClothArmor;
-import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.ChaliceOfBlood;
 import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.CloakOfShadows;
+import com.shatteredpixel.shatteredpixeldungeon.items.bags.MagicalHolster;
 import com.shatteredpixel.shatteredpixeldungeon.items.bags.PotionBandolier;
 import com.shatteredpixel.shatteredpixeldungeon.items.bags.ScrollHolder;
 import com.shatteredpixel.shatteredpixeldungeon.items.bags.VelvetPouch;
 import com.shatteredpixel.shatteredpixeldungeon.items.food.Food;
-import com.shatteredpixel.shatteredpixeldungeon.items.food.SmallRation;
-import com.shatteredpixel.shatteredpixeldungeon.items.keys.KeyToTruth;
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.PotionOfHealing;
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.PotionOfInvisibility;
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.PotionOfLiquidFlame;
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.PotionOfMindVision;
-import com.shatteredpixel.shatteredpixeldungeon.items.potions.elixirs.ElixirOfMight;
-import com.shatteredpixel.shatteredpixeldungeon.items.rings.RingOfTenacity;
 import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.*;
-import com.shatteredpixel.shatteredpixeldungeon.items.wands.WandOfEarthblast;
-import com.shatteredpixel.shatteredpixeldungeon.items.wands.WandOfUnstable;
 import com.shatteredpixel.shatteredpixeldungeon.items.wands.WandOfMagicMissile;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.SpiritBow;
-import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.*;
-import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.Clayball;
+import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.Dagger;
+import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.Gloves;
+import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.MagesStaff;
+import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.WornShortsword;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.ThrowingKnife;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.ThrowingStone;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
@@ -64,7 +59,8 @@ public enum HeroClass {
 	WARRIOR( "warrior", HeroSubClass.BERSERKER, HeroSubClass.GLADIATOR ),
 	MAGE( "mage", HeroSubClass.BATTLEMAGE, HeroSubClass.WARLOCK ),
 	ROGUE( "rogue", HeroSubClass.ASSASSIN, HeroSubClass.FREERUNNER ),
-	HUNTRESS( "huntress", HeroSubClass.SNIPER, HeroSubClass.WARDEN );
+	HUNTRESS( "huntress", HeroSubClass.SNIPER, HeroSubClass.WARDEN ),
+	RAT_KING("king", HeroSubClass.KING);
 
 	private String title;
 	private HeroSubClass[] subClasses;
@@ -96,6 +92,10 @@ public enum HeroClass {
 			case HUNTRESS:
 				initHuntress( hero );
 				break;
+
+			case RAT_KING:
+				initRK(hero);
+				break;
 		}
 
 	}
@@ -106,10 +106,6 @@ public enum HeroClass {
 
 		i = new Food();
 		if (!Challenges.isItemBlocked(i)) i.collect();
-
-		if (Dungeon.isChallenged(Challenges.NO_FOOD)){
-			new SmallRation().collect();
-		}
 
 		new ScrollOfIdentify().identify();
 
@@ -127,6 +123,8 @@ public enum HeroClass {
 				return Badges.Badge.MASTERY_ROGUE;
 			case HUNTRESS:
 				return Badges.Badge.MASTERY_HUNTRESS;
+			case RAT_KING:
+				return Badges.Badge.MASTERY_RAT_KING;
 		}
 		return null;
 	}
@@ -200,6 +198,44 @@ public enum HeroClass {
 		new ScrollOfLullaby().identify();
 	}
 
+	private static void initRK( Hero hero ) {
+		MagesStaff staff;
+
+		staff = new MagesStaff(new WandOfMagicMissile());
+
+		(hero.belongings.weapon = staff).identify();
+		hero.belongings.weapon.activate(hero);
+
+		Dungeon.quickslot.setSlot(0, staff);
+
+		if (hero.belongings.armor != null){
+			hero.belongings.armor.affixSeal(new BrokenSeal());
+		}
+
+		SpiritBow bow = new SpiritBow();
+		bow.identify().collect();
+
+		Dungeon.quickslot.setSlot(1, bow);
+
+		CloakOfShadows cloak = new CloakOfShadows();
+		(hero.belongings.artifact = cloak).identify();
+		hero.belongings.artifact.activate( hero );
+
+		Dungeon.quickslot.setSlot(2, cloak);
+
+		new ScrollHolder().collect();
+		Dungeon.LimitedDrops.SCROLL_HOLDER.drop();
+		new PotionBandolier().collect();
+		Dungeon.LimitedDrops.POTION_BANDOLIER.drop();
+		new VelvetPouch().collect();
+		Dungeon.LimitedDrops.VELVET_POUCH.drop();
+		new MagicalHolster().collect();
+		Dungeon.LimitedDrops.MAGICAL_HOLSTER.drop();
+
+		new PotionOfHealing().identify();
+		new ScrollOfRage().identify();
+	}
+
 	public String title() {
 		return Messages.get(HeroClass.class, title);
 	}
@@ -218,6 +254,8 @@ public enum HeroClass {
 				return Assets.Sprites.ROGUE;
 			case HUNTRESS:
 				return Assets.Sprites.HUNTRESS;
+			case RAT_KING:
+				return Assets.Sprites.RAT_KING_HERO;
 		}
 	}
 
@@ -231,6 +269,8 @@ public enum HeroClass {
 				return Assets.Splashes.ROGUE;
 			case HUNTRESS:
 				return Assets.Splashes.HUNTRESS;
+			case RAT_KING:
+				return Assets.Splashes.RATKING;
 		}
 	}
 	

@@ -50,14 +50,14 @@ public class WandOfCorrosion extends Wand {
 	{
 		image = ItemSpriteSheet.WAND_CORROSION;
 
-		collisionProperties = Ballistica.STOP_TARGET | Ballistica.STOP_TERRAIN;
+		collisionProperties = Ballistica.STOP_TARGET | Ballistica.STOP_SOLID;
 	}
 
 	@Override
 	public void onZap(Ballistica bolt) {
 		CorrosiveGas gas = Blob.seed(bolt.collisionPos, 50 + 10 * buffedLvl(), CorrosiveGas.class);
 		CellEmitter.get(bolt.collisionPos).burst(Speck.factory(Speck.CORROSION), 10 );
-		gas.setStrength(2 + buffedLvl());
+		gas.setStrength((int) ((2 + buffedLvl())*(1+ Dungeon.hero.lvl/150f)));
 		GameScene.add(gas);
 		Sample.INSTANCE.play(Assets.Sounds.GAS);
 

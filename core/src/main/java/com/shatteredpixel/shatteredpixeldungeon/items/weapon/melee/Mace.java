@@ -27,7 +27,6 @@ package com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee;
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
-import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.items.wands.WandOfDisintegration;
 import com.shatteredpixel.shatteredpixeldungeon.mechanics.Ballistica;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
@@ -46,8 +45,8 @@ public class Mace extends MeleeWeapon {
 
 	@Override
 	public int max(int lvl) {
-		return  4*(tier+1) +    //16 base, down from 20
-				lvl*(tier+1);   //scaling unchanged
+		return  5*(tier+1) +    //20 base, down from 24
+				lvl*(tier+2);   //+5
 	}
 
     @Override
@@ -55,10 +54,10 @@ public class Mace extends MeleeWeapon {
 	    if (attacker == Dungeon.hero) {
 			WandOfDisintegration wand = ((WandOfDisintegration)(new WandOfDisintegration().upgrade(level())));
 	    	wand.fx(
-	    		new Ballistica(attacker.pos, defender.pos, Ballistica.STOP_TERRAIN),
+	    		new Ballistica(attacker.pos, defender.pos, Ballistica.STOP_SOLID),
 				new Callback() {
 					public void call() {
-						wand.onZap(new Ballistica(attacker.pos, defender.pos, Ballistica.STOP_TERRAIN));
+						wand.onZap(new Ballistica(attacker.pos, defender.pos, Ballistica.STOP_SOLID));
 						wand.wandUsed();
 					}
 				}

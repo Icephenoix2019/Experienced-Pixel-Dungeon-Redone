@@ -30,7 +30,6 @@ import com.shatteredpixel.shatteredpixeldungeon.items.bags.MagicalHolster;
 import com.shatteredpixel.shatteredpixeldungeon.items.bags.PotionBandolier;
 import com.shatteredpixel.shatteredpixeldungeon.items.bags.ScrollHolder;
 import com.shatteredpixel.shatteredpixeldungeon.items.bags.VelvetPouch;
-import com.shatteredpixel.shatteredpixeldungeon.items.wands.Wand;
 import com.shatteredpixel.shatteredpixeldungeon.journal.Catalog;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.PixelScene;
@@ -117,6 +116,7 @@ public class Badges {
 		MASTERY_MAGE,
 		MASTERY_ROGUE,
 		MASTERY_HUNTRESS,
+		MASTERY_RAT_KING,
 		UNLOCK_MAGE( 65 ),
 		UNLOCK_ROGUE( 66 ),
 		UNLOCK_HUNTRESS( 67 ),
@@ -235,6 +235,16 @@ public class Badges {
 			try {
 				Bundle bundle = FileUtils.bundleFromFile( BADGES_FILE );
 				global = restore( bundle );
+
+				//fixes a bug with challenge badges in pre-0.9.0 saves
+				if (global.contains(Badge.CHAMPION_3)){
+					saveNeeded = !global.contains(Badge.CHAMPION_2) || global.contains(Badge.CHAMPION_1);
+					global.add(Badge.CHAMPION_2);
+					global.add(Badge.CHAMPION_1);
+				} else if (global.contains(Badge.CHAMPION_2)){
+					saveNeeded = !global.contains(Badge.CHAMPION_1);
+					global.add(Badge.CHAMPION_1);
+				}
 				
 			} catch (IOException e) {
 				global = new HashSet<>();
@@ -685,6 +695,9 @@ public class Badges {
 		case HUNTRESS:
 			badge = Badge.MASTERY_HUNTRESS;
 			break;
+		case RAT_KING:
+			badge = Badge.MASTERY_RAT_KING;
+			break;
 		}
 		
 		if (!global.contains( badge )) {
@@ -805,9 +818,17 @@ public class Badges {
 			badge = Badge.CHAMPION_1;
 		}
 		if (challenges >= 3){
+			if (!global.contains(badge)){
+				global.add(badge);
+				saveNeeded = true;
+			}
 			badge = Badge.CHAMPION_2;
 		}
 		if (challenges >= 6){
+			if (!global.contains(badge)){
+				global.add(badge);
+				saveNeeded = true;
+			}
 			badge = Badge.CHAMPION_3;
 		}
 		displayBadge( badge );

@@ -33,6 +33,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.*;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.HeroClass;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.HeroSubClass;
+import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Perks;
 import com.shatteredpixel.shatteredpixeldungeon.effects.MagicMissile;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.items.bags.Bag;
@@ -164,7 +165,7 @@ public abstract class Wand extends Item {
 
 	protected static void processSoulMark(Char target, int wandLevel, int chargesUsed){
 		if (target != Dungeon.hero &&
-				Dungeon.hero.subClass == HeroSubClass.WARLOCK &&
+				Dungeon.hero.isSubclass(HeroSubClass.WARLOCK) &&
 				//standard 1 - 0.92^x chance, plus 7%. Starts at 15%
 				Random.Float() > (Math.pow(0.92f, (wandLevel*chargesUsed)+1) - 0.07f)){
 			SoulMark.prolong(target, SoulMark.class, SoulMark.DURATION + wandLevel);
@@ -334,7 +335,7 @@ public abstract class Wand extends Item {
 			buff.detach();
 		}
 		
-		if (curUser.heroClass == HeroClass.MAGE) levelKnown = true;
+		if (curUser.isClass(HeroClass.MAGE)) levelKnown = true;
 		updateQuickslot();
 
 		curUser.spendAndNext( TIME_TO_ZAP );
@@ -508,7 +509,11 @@ public abstract class Wand extends Item {
 		private static final float CHARGE_BUFF_BONUS = 0.25f;
 
 		float scalingFactor = NORMAL_SCALE_FACTOR;
-		
+
+		public float getScalingChargeAddition() {
+			return SCALING_CHARGE_ADDITION * (Dungeon.hero.perks.contains(Perks.Perk.WAND_PRO) ? 0.75f : 1f);
+		}
+
 		@Override
 		public boolean attachTo( Char target ) {
 			super.attachTo( target );
@@ -541,7 +546,7 @@ public abstract class Wand extends Item {
 			missingCharges = Math.max(0, missingCharges);
 
 			float turnsToCharge = (float) (BASE_CHARGE_DELAY
-					+ (SCALING_CHARGE_ADDITION * Math.pow(scalingFactor, missingCharges)));
+					+ (getScalingChargeAddition() * Math.pow(scalingFactor, missingCharges)));
 
 			LockedFloor lock = target.buff(LockedFloor.class);
 			if (lock == null || lock.regenOn())

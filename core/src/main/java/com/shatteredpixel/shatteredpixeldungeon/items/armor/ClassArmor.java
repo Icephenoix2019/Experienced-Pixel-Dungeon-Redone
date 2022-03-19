@@ -24,6 +24,8 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.items.armor;
 
+import com.shatteredpixel.shatteredpixeldungeon.Challenges;
+import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.items.BrokenSeal;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
@@ -73,6 +75,9 @@ abstract public class ClassArmor extends Armor {
 		case HUNTRESS:
 			classArmor = new HuntressArmor();
 			break;
+			case RAT_KING:
+				classArmor = new RatKingArmor();
+				break;
 		}
 		
 		classArmor.level(armor.level() - (armor.curseInfusionBonus ? 1 : 0));
@@ -90,6 +95,11 @@ abstract public class ClassArmor extends Armor {
 		}
 		
 		return classArmor;
+	}
+
+	protected void useCharge() {
+		charge -= 35;
+		updateQuickslot();
 	}
 
 	private static final String ARMOR_TIER	= "armortier";
@@ -162,6 +172,10 @@ abstract public class ClassArmor extends Armor {
 
 	@Override
 	public int DRMax(int lvl){
+		if (Dungeon.isChallenged(Challenges.NO_ARMOR)){
+			return 1 + armorTier + lvl + augment.defenseFactor(lvl);
+		}
+
 		int max = armorTier * (2 + lvl) + augment.defenseFactor(lvl);
 		if (lvl > max){
 			return ((lvl - max)+1)/2;

@@ -26,11 +26,15 @@ package com.shatteredpixel.shatteredpixeldungeon.items.food;
 
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Badges;
+import com.shatteredpixel.shatteredpixeldungeon.Challenges;
+import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.Statistics;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.ArtifactRecharge;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Hunger;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Recharging;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
+import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Perks;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Speck;
 import com.shatteredpixel.shatteredpixeldungeon.effects.SpellSprite;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
@@ -93,7 +97,11 @@ public class Food extends Item {
 	}
 	
 	protected void satisfy( Hero hero ){
-		Buff.affect(hero, Hunger.class).satisfy( energy );
+		if (Dungeon.isChallenged(Challenges.NO_FOOD)){
+			Buff.affect(hero, Hunger.class).satisfy(energy/3f);
+		} else {
+			Buff.affect(hero, Hunger.class).satisfy(energy);
+		}
 	}
 	
 	public static void foodProc( Hero hero ){
@@ -112,6 +120,9 @@ public class Food extends Item {
 			case ROGUE:
 			case HUNTRESS:
 				break;
+		}
+		if (hero.perks.contains(Perks.Perk.MYSTICAL_MEAL)){
+			Buff.affect(hero, ArtifactRecharge.class).prolong(6);
 		}
 	}
 	

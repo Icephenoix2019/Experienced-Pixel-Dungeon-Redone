@@ -26,6 +26,7 @@ package com.shatteredpixel.shatteredpixeldungeon.items.rings;
 
 import com.shatteredpixel.shatteredpixeldungeon.Challenges;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
+import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Perks;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Flare;
 import com.shatteredpixel.shatteredpixeldungeon.items.Generator;
 import com.shatteredpixel.shatteredpixeldungeon.items.Gold;
@@ -64,8 +65,8 @@ public class RingOfWealth extends Ring {
 
 		//reset (if needed), decrement, and store counts
 		if (triesToDrop == Float.MIN_VALUE) {
-			triesToDrop = Dungeon.NormalIntRange(0, 30);
-			dropsToRare = Dungeon.NormalIntRange(5, 10);
+			triesToDrop = Dungeon.NormalIntRange(0, 20);
+			dropsToRare = Dungeon.NormalIntRange(3, 8);
 		}
 
 		//now handle reward logic
@@ -79,16 +80,17 @@ public class RingOfWealth extends Ring {
 					i = genEquipmentDrop(level - 1);
 				} while (Challenges.isItemBlocked(i));
 				drops.add(i);
-				dropsToRare = Dungeon.NormalIntRange(5, 10);
+				dropsToRare = Random.NormalIntRange(3, 8);
 			} else {
 				Item i;
 				do {
 					i = genConsumableDrop(level - 1);
 				} while (Challenges.isItemBlocked(i));
+				if (Dungeon.hero.perks.contains(Perks.Perk.FISHING_PRO) && Random.Int(4) == 0) i.quantity(i.quantity()*2);
 				drops.add(i);
 				dropsToRare--;
 			}
-			triesToDrop += Dungeon.NormalIntRange(0, 30);
+			triesToDrop += Random.NormalIntRange(0, 20);
 		}
 		
 		return drops;
@@ -126,7 +128,7 @@ public class RingOfWealth extends Ring {
 			latestDropTier = 1;
 			return genLowValueConsumable();
 		//30% chance + 2% per level. Starting from +15: 60%-2%*(lvl-15)
-		} else if (roll < (0.9f - 0.02f * level)) {
+		} else if (roll < 0.9f) {
 			latestDropTier = 2;
 			return genMidValueConsumable();
 		//10% chance + 2% per level. Starting from +15: 40%+2%*(lvl-15)
@@ -137,7 +139,7 @@ public class RingOfWealth extends Ring {
 	}
 
 	private static Item genLowValueConsumable(){
-		switch (Dungeon.Int(4)){
+		switch (Random.Int(4)){
 			case 0: default:
 				Item i = new Gold().random();
 				return i.quantity(i.quantity()/2);
@@ -151,7 +153,7 @@ public class RingOfWealth extends Ring {
 	}
 
 	private static Item genMidValueConsumable(){
-		switch (Dungeon.Int(7)){
+		switch (Random.Int(7)){
 			case 0: default:
 				Item i = genLowValueConsumable();
 				return i.quantity(i.quantity()*2);
@@ -171,7 +173,7 @@ public class RingOfWealth extends Ring {
 	}
 
 	private static Item genHighValueConsumable(){
-		switch (Dungeon.Int(5)){
+		switch (Random.Int(5)){
 			case 0: default:
 				Item i = genMidValueConsumable();
 				if (i instanceof Bomb){
@@ -193,7 +195,7 @@ public class RingOfWealth extends Ring {
 	private static Item genEquipmentDrop( int level ){
 		Item result;
 		int floorset = (Dungeon.depth)/5;
-		switch (Dungeon.Int(5)){
+		switch (Random.Int(5)){
 			default: case 0: case 1:
 				MeleeWeapon w = Generator.randomWeapon(floorset);
 				if (!w.hasGoodEnchant() && Dungeon.Int(10) < level)      w.enchant();
